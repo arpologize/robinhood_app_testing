@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screen_lock/flutter_screen_lock.dart';
 import 'package:grouped_list/grouped_list.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:robinhood_app_testing/config/themes/themes.dart';
+import 'package:robinhood_app_testing/features/main/components/task_item_widget.dart';
 import 'package:robinhood_app_testing/features/main/components/task_status_widget.dart';
 import 'package:robinhood_app_testing/features/main/controllers/main_controller.dart';
 import 'package:robinhood_app_testing/features/main/controllers/tasks_controller.dart';
 import 'package:robinhood_app_testing/features/main/models/task_list_model.dart';
+import 'package:robinhood_app_testing/features/screen_lock/controllers/screen_lock_controller.dart';
 import 'package:robinhood_app_testing/shared_components/loading.dart';
 import 'package:robinhood_app_testing/utils/extension/extension.dart';
+
+import '../../../constants/constants.dart';
 
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({
@@ -45,6 +50,27 @@ class MainScreenState extends ConsumerState<MainScreen> {
     return false;
   }
 
+  void _createPassword() {
+    screenLockCreate(
+      digits: 6,
+      context: context,
+      title: Text(
+        'Enter new password',
+        style:
+            CustomTextStyles.header2.copyWith(color: CustomColors.text3Color),
+      ),
+      confirmTitle: Text('Confirm your password',
+          style: CustomTextStyles.header2
+              .copyWith(color: CustomColors.text3Color)),
+      onConfirmed: (pincode) => {
+        ref.read(screenLockControllerProvider).setPincode(pincode),
+        Navigator.of(context).pop()
+      },
+      cancelButton: const Icon(Icons.close),
+      deleteButton: const Icon(Icons.delete),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final pageController = ref.watch(mainPageControllerProvider);
@@ -62,25 +88,40 @@ class MainScreenState extends ConsumerState<MainScreen> {
   }
 
   Widget _buildHeader(MainPageController pageController) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        TaskStatusWidget(
-          name: 'To-do',
-          isSelect: pageController.taskStatus == TaskStatus.todo,
-          onTap: () => _onTaskStatusTap(TaskStatus.todo),
-        ),
-        TaskStatusWidget(
-          name: 'Doing',
-          isSelect: pageController.taskStatus == TaskStatus.doing,
-          onTap: () => _onTaskStatusTap(TaskStatus.doing),
-        ),
-        TaskStatusWidget(
-          name: 'Done',
-          isSelect: pageController.taskStatus == TaskStatus.done,
-          onTap: () => _onTaskStatusTap(TaskStatus.done),
-        )
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          vertical: kPaddingPage, horizontal: kPaddingPage),
+      child: Row(
+        children: [
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TaskStatusWidget(
+                  name: 'To-do',
+                  isSelect: pageController.taskStatus == TaskStatus.todo,
+                  onTap: () => _onTaskStatusTap(TaskStatus.todo),
+                ),
+                TaskStatusWidget(
+                  name: 'Doing',
+                  isSelect: pageController.taskStatus == TaskStatus.doing,
+                  onTap: () => _onTaskStatusTap(TaskStatus.doing),
+                ),
+                TaskStatusWidget(
+                  name: 'Done',
+                  isSelect: pageController.taskStatus == TaskStatus.done,
+                  onTap: () => _onTaskStatusTap(TaskStatus.done),
+                )
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: () => _createPassword(),
+            child: const Icon(Icons.settings),
+          )
+        ],
+      ),
     );
   }
 
@@ -111,27 +152,11 @@ class MainScreenState extends ConsumerState<MainScreen> {
               style: CustomTextStyles.title1,
             ),
           ),
-          itemBuilder: (context, element) {
+          itemBuilder: (context, task) {
             return Dismissible(
-              onDismissed: (direction) => _onItemSwipe(element),
-              key: Key(element.id ?? ''),
-              child: Card(
-                elevation: 8.0,
-                margin:
-                    const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
-                child: SizedBox(
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20.0, vertical: 10.0),
-                    leading: const Icon(Icons.account_circle),
-                    title: Text(
-                      element.title ?? '',
-                      style: CustomTextStyles.subTitle1,
-                    ),
-                    trailing: const Icon(Icons.arrow_forward),
-                  ),
-                ),
-              ),
+              onDismissed: (direction) => _onItemSwipe(task),
+              key: Key(task.id ?? ''),
+              child: TaskItemWidget(task: task),
             );
           },
         ),

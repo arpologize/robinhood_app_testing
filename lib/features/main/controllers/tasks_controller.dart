@@ -16,9 +16,6 @@ class TasksController extends StateNotifier<AsyncValue<TaskList>> {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(
         () => MainRepository(ref: ref).getTaskList(offset, limit, status));
-    print(state.value?.tasks?.first.id);
-    print(state.value?.pageNumber);
-    print(state.value?.totalPages);
   }
 
   Future<void> deleteTask(Task task) async {
