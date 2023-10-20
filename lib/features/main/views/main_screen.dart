@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:grouped_list/grouped_list.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:robinhood_app_testing/config/themes/custom_colors.dart';
+import 'package:robinhood_app_testing/config/themes/themes.dart';
 import 'package:robinhood_app_testing/features/main/components/task_status_widget.dart';
 import 'package:robinhood_app_testing/features/main/controllers/main_controller.dart';
 import 'package:robinhood_app_testing/features/main/controllers/tasks_controller.dart';
+import 'package:robinhood_app_testing/features/main/models/task_list_model.dart';
 import 'package:robinhood_app_testing/shared_components/loading.dart';
+import 'package:robinhood_app_testing/utils/extension/extension.dart';
 
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({
@@ -20,6 +23,28 @@ class MainScreenState extends ConsumerState<MainScreen> {
     ref.read(mainPageControllerProvider).setTaskStatus(taskStatus);
   }
 
+  void _onItemSwipe(Task task) {
+    ref.read(tasksControllerProvider.notifier).deleteTask(task);
+  }
+
+  bool _onNotification(ScrollEndNotification scrollEndNotification) {
+    final pageController = ref.watch(mainPageControllerProvider);
+    final taskList = ref.watch(tasksControllerProvider);
+    final metrics = scrollEndNotification.metrics;
+    if (metrics.atEdge) {
+      bool isTop = metrics.pixels == 0;
+      if (!isTop) {
+        ref.read(tasksControllerProvider.notifier).getTaskList(
+            offset: ((taskList.value?.totalPages ?? 0) - 1 ==
+                    taskList.value?.pageNumber)
+                ? taskList.value?.pageNumber ?? 0
+                : (taskList.value?.pageNumber ?? 0) + 1,
+            status: pageController.taskStatusText);
+      }
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final pageController = ref.watch(mainPageControllerProvider);
@@ -27,13 +52,11 @@ class MainScreenState extends ConsumerState<MainScreen> {
         resizeToAvoidBottomInset: false,
         backgroundColor: CustomColors.onBackgroundColor,
         body: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                _buildHeader(pageController),
-                _buildTaskList(pageController)
-              ],
-            ),
+          child: Column(
+            children: [
+              _buildHeader(pageController),
+              Expanded(child: _buildTaskList(pageController))
+            ],
           ),
         ));
   }
@@ -64,20 +87,54 @@ class MainScreenState extends ConsumerState<MainScreen> {
   Widget _buildTaskList(MainPageController pageController) {
     final taskList = ref.watch(tasksControllerProvider);
     return taskList.when(
-      data: (taskData) => Column(
-        mainAxisSize: MainAxisSize.min,
-        children: (taskData.tasks
-                    ?.where((element) =>
-                        element.status == pageController.taskStatusText)
-                    .toList() ??
-                [])
-            .asMap()
-            .map((index, task) => MapEntry(
-                  index,
-                  Text(task.title ?? ''),
-                ))
-            .values
-            .toList(),
+      data: (taskData) => NotificationListener<ScrollEndNotification>(
+        onNotification: (notification) => _onNotification(notification),
+        child: GroupedListView<Task, DateTime>(
+          elements: taskData.tasks ?? [],
+          groupBy: (element) => element.createdAtDate,
+          groupComparator: (value1, value2) => value2.compareTo(value1),
+          itemComparator: (item1, item2) =>
+              (item1.id ?? '').compareTo(item2.id ?? ''),
+          order: GroupedListOrder.DESC,
+          useStickyGroupSeparators: true,
+          groupSeparatorBuilder: (DateTime value) => Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              (value.compareTo(DateTime.now()) == 0)
+                  ? 'Today'
+                  : (value.compareTo(
+                              DateTime.now().add(const Duration(days: 1))) ==
+                          0)
+                      ? 'Tormorrow'
+                      : value.dateDisplayFormat(),
+              textAlign: TextAlign.center,
+              style: CustomTextStyles.title1,
+            ),
+          ),
+          itemBuilder: (context, element) {
+            return Dismissible(
+              onDismissed: (direction) => _onItemSwipe(element),
+              key: Key(element.id ?? ''),
+              child: Card(
+                elevation: 8.0,
+                margin:
+                    const EdgeInsets.symmetric(horizontal: 10.0, vertical: 6.0),
+                child: SizedBox(
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20.0, vertical: 10.0),
+                    leading: const Icon(Icons.account_circle),
+                    title: Text(
+                      element.title ?? '',
+                      style: CustomTextStyles.subTitle1,
+                    ),
+                    trailing: const Icon(Icons.arrow_forward),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
       ),
       error: (error, stackTrace) => Text(error.toString()),
       loading: () => const Loading(),

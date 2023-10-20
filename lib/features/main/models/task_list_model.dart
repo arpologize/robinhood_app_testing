@@ -1,15 +1,19 @@
-import 'pagination_model.dart';
+import 'package:robinhood_app_testing/utils/extension/extension.dart';
 
-class TaskList extends Pagination {
-  TaskList({this.tasks});
-  List<Tasks>? tasks;
+class TaskList {
+  TaskList({this.tasks, this.pageNumber, this.totalPages});
+  int? pageNumber;
+  int? totalPages;
+  List<Task>? tasks;
   TaskList.fromJson(Map<String, dynamic> json) {
     if (json['tasks'] != null) {
-      tasks = <Tasks>[];
+      tasks = <Task>[];
       json['tasks'].forEach((v) {
-        tasks!.add(new Tasks.fromJson(v));
+        tasks!.add(new Task.fromJson(v));
       });
     }
+    pageNumber = json['pageNumber'];
+    totalPages = json['totalPages'];
   }
 
   Map<String, dynamic> toJson() {
@@ -17,6 +21,8 @@ class TaskList extends Pagination {
     if (this.tasks != null) {
       data['tasks'] = this.tasks!.map((v) => v.toJson()).toList();
     }
+    data['pageNumber'] = this.pageNumber;
+    data['totalPages'] = this.totalPages;
     return data;
   }
 }
@@ -28,6 +34,7 @@ class Task {
   String? createdAt;
   String? status;
 
+  DateTime get createdAtDate => (createdAt ?? '').toDateTime();
   Task({this.id, this.title, this.description, this.createdAt, this.status});
 
   Task.fromJson(Map<String, dynamic> json) {

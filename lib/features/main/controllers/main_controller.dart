@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:robinhood_app_testing/constants/constants.dart';
+import 'package:robinhood_app_testing/features/main/controllers/tasks_controller.dart';
 
 enum TaskStatus { todo, doing, done }
 
@@ -21,6 +22,9 @@ class MainPageController extends ChangeNotifier {
 
   void setTaskStatus(TaskStatus taskStatus) {
     _taskStatus = taskStatus;
+    ref
+        .read(tasksControllerProvider.notifier)
+        .getTaskList(offset: 0, status: taskStatusText);
     notifyListeners();
   }
 }

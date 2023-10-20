@@ -10,9 +10,14 @@ class MainRepository {
 
   final _todoList = '/todo-list';
 
-  Future<TaskList> getTaskList() async {
+  Future<TaskList> getTaskList(int offset, int limit, String status) async {
     try {
-      var res = await ref.watch(apiClientProvider).get(_todoList);
+      var res = await ref.watch(apiClientProvider).get(_todoList,
+          queryParameters: {
+            'offset': offset,
+            'limit': limit,
+            'status': status
+          });
       return TaskList.fromJson(res.data);
     } on DioException catch (err) {
       if (err.response?.statusCode == 401) {
