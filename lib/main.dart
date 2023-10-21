@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:responsive_framework/responsive_framework.dart';
+import 'package:robinhood_app_testing/features/screen_lock/controllers/screen_lock_controller.dart';
 import 'config/routes/app_router.dart';
 import 'config/themes/custom_themes.dart';
 
 void main() {
-  runApp(
-    const MyApp(),
-  );
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends ConsumerWidget {
@@ -17,12 +16,15 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, ref) {
     final appRouter = ref.watch(appRouterProvider);
     return GestureDetector(
-      onTap: () {
-        FocusScopeNode current = FocusScope.of(context);
-        if (!current.hasPrimaryFocus && current.focusedChild != null) {
-          current.focusedChild?.unfocus();
-        }
-      },
+      onTap: () => ref
+          .read(screenLockControllerProvider.notifier)
+          .handleUserInteraction(),
+      onPanDown: (_) => ref
+          .read(screenLockControllerProvider.notifier)
+          .handleUserInteraction(),
+      onScaleStart: (_) => ref
+          .read(screenLockControllerProvider.notifier)
+          .handleUserInteraction(),
       child: MaterialApp.router(
         debugShowCheckedModeBanner: false,
         title: 'Robinhood app testing',
