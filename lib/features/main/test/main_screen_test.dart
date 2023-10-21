@@ -99,7 +99,7 @@ Future<void> testChangePincode(WidgetTester tester) async {
 Future<void> testLoadApi(WidgetTester tester) async {
   await tester.pump();
   await pumpUntil(tester, find.byType(TaskItemWidget));
-  expect(find.byType(TaskItemWidget), findsAny);
+  expect(find.byType(TaskItemWidget), findsAtLeastNWidgets(1));
   print("== Load api success ==");
   await tester.pumpAndSettle();
 }
