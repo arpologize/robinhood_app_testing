@@ -9,4 +9,6 @@ class CustomColors {
   static const Color text4Color = Color(0xff919aaa);
   static const Color backgroundColor = Color(0xff88a3ff);
   static const Color onBackgroundColor = Color(0xffffffff);
+  static const Color onBackground2Color = Color(0xff000000);
+  static const Color errorColor = Color(0xfff40201);
 }

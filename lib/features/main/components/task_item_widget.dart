@@ -16,6 +16,7 @@ class TaskItemWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       margin: const EdgeInsets.symmetric(vertical: 5),
       padding: const EdgeInsets.all(kPaddingPage),
       color: CustomColors.primaryColor.withOpacity(0.5),

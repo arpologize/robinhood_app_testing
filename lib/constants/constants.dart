@@ -9,3 +9,6 @@ const taskStatusDone = 'DONE';
 const taskStatusDoing = 'DOING';
 
 const timeInactive = 10;
+
+const changePincodeKey = 'ChangePincode';
+const snackbarKey = 'SnackBar';

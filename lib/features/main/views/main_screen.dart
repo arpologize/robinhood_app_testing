@@ -8,11 +8,15 @@ import 'package:robinhood_app_testing/features/main/components/task_status_widge
 import 'package:robinhood_app_testing/features/main/controllers/main_controller.dart';
 import 'package:robinhood_app_testing/features/main/controllers/tasks_controller.dart';
 import 'package:robinhood_app_testing/features/main/models/task_list_model.dart';
+import 'package:robinhood_app_testing/features/screen_lock/components/screen_lock_custom.dart';
 import 'package:robinhood_app_testing/features/screen_lock/controllers/screen_lock_controller.dart';
 import 'package:robinhood_app_testing/shared_components/loading.dart';
 import 'package:robinhood_app_testing/utils/extension/extension.dart';
+import 'package:top_snackbar_flutter/top_snack_bar.dart';
 
 import '../../../constants/constants.dart';
+import '../../../shared_components/snack_bar_error.dart';
+import '../../../shared_components/snack_bar_success.dart';
 
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({
@@ -24,12 +28,20 @@ class MainScreen extends ConsumerStatefulWidget {
 }
 
 class MainScreenState extends ConsumerState<MainScreen> {
-  void _onTaskStatusTap(TaskStatus taskStatus) {
+  void onTaskStatusTap(TaskStatus taskStatus) {
     ref.read(mainPageControllerProvider).setTaskStatus(taskStatus);
   }
 
   void _onItemSwipe(Task task) {
-    ref.read(tasksControllerProvider.notifier).deleteTask(task);
+    ref.read(tasksControllerProvider.notifier).deleteTask(task).then((value) {
+      if (ref.read(tasksControllerProvider).hasError) {
+        showTopSnackBar(
+            Overlay.of(context), const SnackBarError(text: 'Delete fail'));
+      } else if (ref.read(tasksControllerProvider).hasValue) {
+        showTopSnackBar(
+            Overlay.of(context), const SnackBarSuccess(text: 'Delete success'));
+      }
+    });
   }
 
   bool _onNotification(ScrollEndNotification scrollEndNotification) {
@@ -50,24 +62,26 @@ class MainScreenState extends ConsumerState<MainScreen> {
     return false;
   }
 
-  void _createPassword() {
-    screenLockCreate(
-      digits: 6,
+  void createPincode() {
+    showDialog<void>(
       context: context,
-      title: Text(
-        'Enter new password',
-        style:
-            CustomTextStyles.header2.copyWith(color: CustomColors.text3Color),
+      builder: (context) => ScreenLockCustom.create(
+        digits: 6,
+        title: Text(
+          'Enter new password',
+          style:
+              CustomTextStyles.header2.copyWith(color: CustomColors.text3Color),
+        ),
+        confirmTitle: Text('Confirm your password',
+            style: CustomTextStyles.header2
+                .copyWith(color: CustomColors.text3Color)),
+        onConfirmed: (pincode) => {
+          ref.read(screenLockControllerProvider).setPincode(pincode),
+          Navigator.of(context).pop()
+        },
+        cancelButton: const Icon(Icons.close),
+        deleteButton: const Icon(Icons.delete),
       ),
-      confirmTitle: Text('Confirm your password',
-          style: CustomTextStyles.header2
-              .copyWith(color: CustomColors.text3Color)),
-      onConfirmed: (pincode) => {
-        ref.read(screenLockControllerProvider).setPincode(pincode),
-        Navigator.of(context).pop()
-      },
-      cancelButton: const Icon(Icons.close),
-      deleteButton: const Icon(Icons.delete),
     );
   }
 
@@ -101,23 +115,27 @@ class MainScreenState extends ConsumerState<MainScreen> {
                 TaskStatusWidget(
                   name: 'To-do',
                   isSelect: pageController.taskStatus == TaskStatus.todo,
-                  onTap: () => _onTaskStatusTap(TaskStatus.todo),
+                  onTap: () => onTaskStatusTap(TaskStatus.todo),
+                  value: taskStatusTodo,
                 ),
                 TaskStatusWidget(
                   name: 'Doing',
                   isSelect: pageController.taskStatus == TaskStatus.doing,
-                  onTap: () => _onTaskStatusTap(TaskStatus.doing),
+                  onTap: () => onTaskStatusTap(TaskStatus.doing),
+                  value: taskStatusDoing,
                 ),
                 TaskStatusWidget(
                   name: 'Done',
                   isSelect: pageController.taskStatus == TaskStatus.done,
-                  onTap: () => _onTaskStatusTap(TaskStatus.done),
+                  onTap: () => onTaskStatusTap(TaskStatus.done),
+                  value: taskStatusDone,
                 )
               ],
             ),
           ),
           GestureDetector(
-            onTap: () => _createPassword(),
+            key: const Key(changePincodeKey),
+            onTap: () => createPincode(),
             child: const Icon(Icons.settings),
           )
         ],
@@ -156,6 +174,7 @@ class MainScreenState extends ConsumerState<MainScreen> {
             return Dismissible(
               onDismissed: (direction) => _onItemSwipe(task),
               key: Key(task.id ?? ''),
+              background: Container(color: CustomColors.errorColor),
               child: TaskItemWidget(task: task),
             );
           },

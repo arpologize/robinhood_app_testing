@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:robinhood_app_testing/features/screen_lock/states/auth_state.dart';
 import '../../features/main/views/main_screen.dart';
-import '../../features/screen_lock/screen_lock_screen.dart';
+import '../../features/screen_lock/views/screen_lock_screen.dart';
 import 'route_config.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {

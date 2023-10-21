@@ -8,15 +8,18 @@ class TaskStatusWidget extends StatelessWidget {
       {Key? key,
       required this.name,
       required this.isSelect,
-      required this.onTap})
+      required this.onTap,
+      required this.value})
       : super(key: key);
 
   final String name;
   final bool isSelect;
   final VoidCallback onTap;
+  final String value;
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      key: Key(value),
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(right: 10),

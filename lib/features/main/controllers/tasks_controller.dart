@@ -19,8 +19,17 @@ class TasksController extends StateNotifier<AsyncValue<TaskList>> {
   }
 
   Future<void> deleteTask(Task task) async {
-    state.value?.tasks?.removeWhere((element) => element.id == task.id);
-    state = AsyncValue.data(state.value ?? TaskList());
+    try {
+      if (state.value?.tasks?.any((element) => element.id == task.id) ??
+          false) {
+        state.value?.tasks?.removeWhere((element) => element.id == task.id);
+        state = AsyncValue.data(state.value ?? TaskList());
+      } else {
+        state = AsyncError('Not have data in list', StackTrace.current);
+      }
+    } catch (e) {
+      state = AsyncError(e, StackTrace.current);
+    }
   }
 }
 
