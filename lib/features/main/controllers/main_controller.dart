@@ -9,7 +9,7 @@ enum TaskStatus { todo, doing, done }
 class MainPageController extends ChangeNotifier {
   MainPageController(this.ref) : super();
 
-  final Ref ref;
+  final Ref? ref;
 
   TaskStatus _taskStatus = TaskStatus.todo;
   TaskStatus get taskStatus => _taskStatus;
@@ -22,9 +22,11 @@ class MainPageController extends ChangeNotifier {
 
   void setTaskStatus(TaskStatus taskStatus) {
     _taskStatus = taskStatus;
-    ref
-        .read(tasksControllerProvider.notifier)
-        .getTaskList(offset: 0, status: taskStatusText);
+    if (ref != null) {
+      ref!
+          .read(tasksControllerProvider.notifier)
+          .getTaskList(offset: 0, status: taskStatusText);
+    }
     notifyListeners();
   }
 }

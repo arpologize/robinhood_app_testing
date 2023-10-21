@@ -1,30 +1,52 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/mockito.dart';
+import 'package:robinhood_app_testing/constants/constants.dart';
+import 'package:robinhood_app_testing/features/main/controllers/main_controller.dart';
+import 'package:robinhood_app_testing/features/screen_lock/controllers/screen_lock_controller.dart';
 
-import 'package:robinhood_app_testing/main.dart';
+/// Mocks a callback function on which you can use verify
+class MockCallbackFunction extends Mock {
+  call();
+}
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  group('MainPageController', () {
+    late MainPageController mainPageController;
+    final notifyListenerCallback = MockCallbackFunction();
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    setUp(() {
+      mainPageController = MainPageController(null)
+        ..addListener(notifyListenerCallback);
+      reset(notifyListenerCallback);
+    });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    test('Test Set TaskStatus', () {
+      mainPageController.setTaskStatus(TaskStatus.doing);
+      expect(mainPageController.taskStatus, TaskStatus.doing);
+      verify(notifyListenerCallback()).called(1);
+    });
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  group('ScreenLockController', () {
+    late ScreenLockController screenLockController;
+    final notifyListenerCallback = MockCallbackFunction();
+
+    setUp(() {
+      screenLockController = ScreenLockController(null)
+        ..addListener(notifyListenerCallback);
+      reset(notifyListenerCallback);
+    });
+
+    test('Test set pincode', () {
+      screenLockController.setPincode('123456');
+      expect(screenLockController.pincode, '123456');
+      verify(notifyListenerCallback()).called(1);
+    });
+
+    test('Test time inactive', () async {
+      screenLockController.handleUserInteraction();
+      await Future.delayed(const Duration(seconds: timeInactive));
+      expect(screenLockController.isTimeout, true);
+    });
   });
 }

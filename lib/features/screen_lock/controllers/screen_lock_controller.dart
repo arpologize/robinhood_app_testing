@@ -11,21 +11,26 @@ class ScreenLockController extends ChangeNotifier {
   ScreenLockController(this.ref) : super() {
     handleUserInteraction();
   }
-  final Ref ref;
+  final Ref? ref;
   String _pincode = "123456";
   String get pincode => _pincode;
   String pincodeInput = '';
-  Timer? _timerInteract;
+  Timer? timerInteract;
+  bool isTimeout = false;
   void setPincode(String pincode) {
     _pincode = pincode;
     notifyListeners();
   }
 
   void handleUserInteraction() {
-    _timerInteract?.cancel();
-    _timerInteract = Timer.periodic(const Duration(seconds: timeInactive), (_) {
-      _timerInteract?.cancel();
-      if (ref.read(authState)) ref.read(authState.notifier).setState(false);
+    isTimeout = false;
+    timerInteract?.cancel();
+    timerInteract = Timer.periodic(const Duration(seconds: timeInactive), (_) {
+      timerInteract?.cancel();
+      isTimeout = true;
+      if (ref != null && ref!.read(authState)) {
+        ref!.read(authState.notifier).setState(false);
+      }
     });
   }
 }
